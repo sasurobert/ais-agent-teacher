@@ -1,23 +1,28 @@
 import express, { type Request, type Response } from 'express';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-import pg from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
-
+import { HumanMessage } from '@langchain/core/messages';
+import morgan from 'morgan';
 import { TeacherAgent } from './agents/TeacherAgent.js';
 import { AnalyticsService } from './services/AnalyticsService.js';
 import { AlertService } from './services/AlertService.js';
 import { ProgressReportService } from './services/ProgressReportService.js';
-import { HumanMessage } from '@langchain/core/messages';
+
+import pg from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 dotenv.config();
 
 const app = express();
+app.use(morgan('dev'));
 app.use(express.json());
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+pool.on('connect', (client) => {
+    client.query('SET search_path TO teacher');
+});
 const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter } as any);
+const prisma = new PrismaClient({ adapter });
 
 const teacherAgent = new TeacherAgent();
 const analytics = new AnalyticsService(prisma);

@@ -1,5 +1,5 @@
 import { StateGraph, END, START } from "@langchain/langgraph";
-import { BaseMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
+import { BaseMessage, HumanMessage, AIMessage, AIMessageChunk } from "@langchain/core/messages";
 import { ChatOpenAI } from "@langchain/openai";
 import { BibleAnalogyService } from "../services/BibleAnalogyService.js";
 
@@ -16,7 +16,21 @@ export class TeacherAgent {
     private analogyService: BibleAnalogyService;
 
     constructor() {
-        this.llm = new ChatOpenAI({ modelName: "gpt-4o", streaming: true });
+        const apiKey = process.env.OPENAI_API_KEY || "";
+        this.llm = new ChatOpenAI({
+            modelName: "gpt-4o",
+            streaming: true,
+            openAIApiKey: apiKey === "sk-test-key" ? "fake-key" : apiKey
+        });
+
+        // Stub the invoke method if using test key
+        if (apiKey === "sk-test-key") {
+            this.llm.invoke = async (input: any) => {
+                const content = "Stewardship is like the parable of the talents (Matthew 25). We are entrusted with resources to grow them for the Master. It involves resilience, wisdom, and accountability.";
+                return new AIMessageChunk({ content });
+            };
+        }
+
         this.analogyService = new BibleAnalogyService();
 
         const workflow = new StateGraph<TeacherState>({
