@@ -12,19 +12,32 @@ export class AnalyticsService {
      * In a real system, this might join with the 'ais-agent-tutor' DB or use a central data lake.
      */
     async getClassHealth(teacherDid: string) {
-        const alerts = await (this.prisma as any).studentAlert.findMany({
-            where: { teacherDid, resolved: false },
-        });
+        console.log(`[AnalyticsService] Fetching health for teacher: ${teacherDid}`);
+        try {
+            // Raw query test
+            const rawTest = await (this.prisma as any).$queryRaw`SELECT tablename FROM pg_tables WHERE schemaname = 'teacher'`;
+            console.log(`[AnalyticsService] Raw tables in teacher schema:`, rawTest);
 
-        const activeClasses = await (this.prisma as any).classAnalytics.findMany({
-            where: { teacherDid },
-        });
+            const currentSchema = await (this.prisma as any).$queryRaw`SELECT current_schema()`;
+            console.log(`[AnalyticsService] Current schema:`, currentSchema);
 
-        return {
-            totalAlerts: alerts.length,
-            alerts: alerts.slice(0, 5), // Latest 5 alerts
-            classes: activeClasses
-        };
+            const alerts = await (this.prisma as any).studentAlert.findMany({
+                where: { teacherDid, resolved: false },
+            });
+
+            const activeClasses = await (this.prisma as any).classAnalytics.findMany({
+                where: { teacherDid },
+            });
+
+            return {
+                totalAlerts: alerts.length,
+                alerts: alerts.slice(0, 5), // Latest 5 alerts
+                classes: activeClasses
+            };
+        } catch (error: any) {
+            console.error(`[AnalyticsService] Error in getClassHealth:`, error);
+            throw error;
+        }
     }
 
     /**

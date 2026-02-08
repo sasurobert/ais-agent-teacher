@@ -11,7 +11,7 @@ export class ProgressReportService {
      * Generates a comprehensive progress report for a teacher's class.
      */
     async generateClassReport(teacherDid: string, classId: string) {
-        const classInfo = await (this.prisma as any).classAnalytics.findUnique({
+        const classInfo = await (this.prisma as any).classAnalytics.findFirst({
             where: { id: classId, teacherDid }
         });
 
@@ -24,6 +24,12 @@ export class ProgressReportService {
             where: { teacherDid, resolved: false },
         });
 
+        console.log(`[ProgressReportService] Found ${alerts.length} alerts for teacher ${teacherDid}`);
+        if (alerts.length > 0) {
+            console.log(`[ProgressReportService] Sample alert:`, JSON.stringify(alerts[0]));
+            console.log(`[ProgressReportService] Sample alert keys:`, Object.keys(alerts[0]));
+        }
+
         const report = `
 # Progress Report: ${classInfo.className}
 Generated on: ${new Date().toLocaleDateString()}
@@ -32,7 +38,7 @@ Generated on: ${new Date().toLocaleDateString()}
 ${classInfo.summary || 'No summary available.'}
 
 ## Active Alerts (${alerts.length})
-${alerts.map((a: any) => `- [${a.severity}] ${a.studentDid}: ${a.message}`).join('\n')}
+${alerts.map((a: any) => `- ALERT: ${a.type || 'MISSING_TYPE'} [${a.severity}] ${a.studentDid}: ${a.message}`).join('\n')}
 
 ## Pedagogical Recommendations
 - Reinforce **Fractions** foundations for the flagged students.

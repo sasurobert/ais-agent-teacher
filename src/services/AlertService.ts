@@ -12,16 +12,22 @@ export class AlertService {
      */
     async checkStudentAlerts(studentDid: string, teacherDid: string, state: any) {
         if (state.helpClickCount >= 5) {
-            await (this.prisma as any).studentAlert.create({
-                data: {
-                    studentDid,
-                    teacherDid,
-                    type: 'HELP_ABUSE',
-                    severity: 'HIGH',
-                    message: `Student ${studentDid} has clicked the help button ${state.helpClickCount} times without quest progression.`
-                }
-            });
-            console.log(`Alert created: Help Abuse for ${studentDid}`);
+            console.log(`[AlertService] Creating HELP_ABUSE alert for ${studentDid}`);
+            const alertData = {
+                studentDid,
+                teacherDid,
+                type: 'HELP_ABUSE',
+                severity: 'HIGH',
+                message: `Student ${studentDid} has clicked the help button ${state.helpClickCount} times without quest progression.`
+            };
+            try {
+                const newAlert = await (this.prisma as any).studentAlert.create({
+                    data: alertData
+                });
+                console.log(`[AlertService] Alert created in DB:`, JSON.stringify(newAlert));
+            } catch (err: any) {
+                console.error(`[AlertService] Failed to create alert:`, err.message);
+            }
         }
 
         if (state.gritScore < 0.5) {

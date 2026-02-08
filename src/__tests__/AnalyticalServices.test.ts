@@ -9,7 +9,8 @@ const mockPrisma = {
     },
     classAnalytics: {
         findMany: vi.fn().mockResolvedValue([{ className: 'Math 101' }]),
-    }
+    },
+    $queryRaw: vi.fn().mockResolvedValue([])
 };
 
 describe('Analytical Services', () => {

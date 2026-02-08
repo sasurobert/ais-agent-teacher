@@ -63,6 +63,7 @@ app.get('/analytics/:teacherDid', async (req: Request, res: Response) => {
 
 app.post('/events/telemetry', async (req: Request, res: Response) => {
     const { studentDid, teacherDid, state } = req.body;
+    console.log(`[Teacher] Received telemetry for student: ${studentDid}, teacher: ${teacherDid}, helpClicks: ${state?.helpClickCount}`);
     await alerts.checkStudentAlerts(studentDid, teacherDid, state);
     res.json({ processed: true });
 });

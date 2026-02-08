@@ -5,11 +5,17 @@ dotenv.config();
 async function audit() {
     const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
     try {
-        const res = await pool.query("SELECT table_schema, table_name FROM information_schema.tables WHERE table_name LIKE '%State%'");
-        console.log("Tables found:", res.rows);
+        console.log("Seeding a test alert manually...");
+        await pool.query(`
+            INSERT INTO "teacher"."StudentAlert" ("id", "studentDid", "teacherDid", "type", "severity", "message")
+            VALUES ('test-alert-1', 'student-test', 'teacher-123', 'MANUAL_TYPE', 'LOW', 'Manual test alert')
+            ON CONFLICT ("id") DO NOTHING
+        `);
 
-        const currentSchema = await pool.query("SELECT current_schema()");
-        console.log("Current schema:", currentSchema.rows[0]);
+        console.log("Auditing StudentAlert table contents...");
+        const res = await pool.query('SELECT * FROM "teacher"."StudentAlert"');
+        console.log("Alerts found:", JSON.stringify(res.rows));
+
     } catch (err) {
         console.error(err);
     } finally {

@@ -1,34 +1,44 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  previewFeatures = ["driverAdapters", "multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["teacher"]
 }
 
 model TeacherState {
-  teacherDid String   @id
-  lastLogin  DateTime @default(now())
+  teacherDid  String   @id @map("teacher_did")
+  lastLogin   DateTime @default(now()) @map("last_login")
   preferences Json?
+
+  @@schema("teacher")
+  @@map("teacher_state")
 }
 
 model ClassAnalytics {
   id          String   @id @default(uuid())
-  teacherDid  String
-  className   String
+  teacherDid  String   @map("teacher_did")
+  className   String   @map("class_name")
   summary     String
-  alertCount  Int      @default(0)
-  createdAt   DateTime @default(now())
+  alertCount  Int      @default(0) @map("alert_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@schema("teacher")
+  @@map("class_analytics")
 }
 
 model StudentAlert {
   id          String   @id @default(uuid())
-  studentDid  String
-  teacherDid  String
+  studentDid  String   @map("student_did")
+  teacherDid  String   @map("teacher_did")
   type        String   // 'HELP_ABUSE', 'STRUGGLE', 'MILESTONE'
   severity    String   // 'LOW', 'MEDIUM', 'HIGH'
   message     String
   resolved    Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@schema("teacher")
+  @@map("student_alert")
 }
