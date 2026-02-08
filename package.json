@@ -1,0 +1,39 @@
+{
+  "name": "ais-agent-teacher",
+  "version": "1.0.0",
+  "description": "The **AIS Agent Teacher** is an efficiency-driven personal assistant for educators within the AISchoolOS ecosystem. Unlike the student-facing tutor, this agent focuses on direct output, rapid drafting, and proactive classroom insights.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts",
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@langchain/core": "^1.1.19",
+    "@langchain/langgraph": "^1.1.4",
+    "@langchain/openai": "^1.2.5",
+    "@prisma/adapter-pg": "^7.3.0",
+    "@prisma/client": "^7.3.0",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1",
+    "pg": "^8.18.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.2.2",
+    "@types/pg": "^8.16.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "prisma": "^7.3.0"
+  }
+}

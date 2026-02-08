@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model TeacherState {
+  teacherDid String   @id
+  lastLogin  DateTime @default(now())
+  preferences Json?
+}
+
+model ClassAnalytics {
+  id          String   @id @default(uuid())
+  teacherDid  String
+  className   String
+  summary     String
+  alertCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model StudentAlert {
+  id          String   @id @default(uuid())
+  studentDid  String
+  teacherDid  String
+  type        String   // 'HELP_ABUSE', 'STRUGGLE', 'MILESTONE'
+  severity    String   // 'LOW', 'MEDIUM', 'HIGH'
+  message     String
+  resolved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
