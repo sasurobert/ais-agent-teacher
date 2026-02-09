@@ -7,6 +7,7 @@ import { TeacherAgent } from './agents/TeacherAgent.js';
 import { AnalyticsService } from './services/AnalyticsService.js';
 import { AlertService } from './services/AlertService.js';
 import { ProgressReportService } from './services/ProgressReportService.js';
+import playbookRoutes from './routes/playbook.routes.js';
 
 import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -16,6 +17,7 @@ dotenv.config();
 const app = express();
 app.use(morgan('dev'));
 app.use(express.json());
+app.use('/playbook', playbookRoutes);
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 pool.on('connect', (client) => {
