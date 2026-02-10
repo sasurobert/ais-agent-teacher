@@ -42,3 +42,41 @@ model StudentAlert {
   @@schema("teacher")
   @@map("student_alert")
 }
+
+model NotebookRegistry {
+  id              String   @id @default(uuid())
+  notebooklmId    String   @map("notebooklm_id")
+  notebooklmUrl   String   @map("notebooklm_url")
+  title           String
+  description     String?
+  subject         String?
+  gradeLevel      String?  @map("grade_level")
+  sourcePdfHash   String?  @map("source_pdf_hash")
+  ownerDid        String   @map("owner_did")
+  visibility      String   @default("private") // private | teachers | students | public
+  tags            String[]
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  shares          NotebookShare[]
+
+  @@index([ownerDid])
+  @@index([visibility])
+  @@schema("teacher")
+  @@map("notebook_registry")
+}
+
+model NotebookShare {
+  id              String   @id @default(uuid())
+  notebookId      String   @map("notebook_id")
+  sharedWithDid   String   @map("shared_with_did")
+  role            String   @default("reader") // reader | contributor
+  sharedByDid     String   @map("shared_by_did")
+  sharedAt        DateTime @default(now()) @map("shared_at")
+
+  notebook        NotebookRegistry @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+
+  @@index([sharedWithDid])
+  @@schema("teacher")
+  @@map("notebook_shares")
+}

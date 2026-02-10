@@ -124,9 +124,15 @@ export const VerificationChecklistSchema = z.object({
     flags: z.array(z.object({
         severity: z.enum(['Critical', 'Warning', 'Info']),
         category: z.enum(['Worldview', 'Pedagogy', 'Accuracy', 'Safety']),
+        subcategory: z.enum(['SourceGrounding', 'FactCheck', 'General']).optional(),
         description: z.string(),
         location: z.string(),
-        resolved: z.boolean()
+        resolved: z.boolean(),
+        notebookLMCitation: z.object({
+            source: z.string(),
+            quote: z.string(),
+            location: z.string().optional(),
+        }).optional()
     })),
     teacherSignoff: z.boolean(),
     signoffDate: z.string().optional()

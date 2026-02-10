@@ -8,6 +8,9 @@ import { AnalyticsService } from './services/AnalyticsService.js';
 import { AlertService } from './services/AlertService.js';
 import { ProgressReportService } from './services/ProgressReportService.js';
 import playbookRoutes from './routes/playbook.routes.js';
+import { NotebookLMService } from './services/NotebookLMService.js';
+import { NotebookSharingService } from './services/NotebookSharingService.js';
+import { createResearchRouter } from './routes/research.routes.js';
 
 import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -30,6 +33,17 @@ const teacherAgent = new TeacherAgent();
 const analytics = new AnalyticsService(prisma);
 const alerts = new AlertService(prisma);
 const reportService = new ProgressReportService(prisma);
+
+// NotebookLM integration
+const notebookLMService = new NotebookLMService();
+const notebookSharing = new NotebookSharingService(prisma);
+
+// Connect to MCP server (non-blocking)
+notebookLMService.connect().catch(err => {
+    console.warn('[Teacher] NotebookLM MCP not available:', err.message);
+});
+
+app.use('/research', createResearchRouter(notebookLMService, notebookSharing));
 
 const port = process.env.PORT || 3007;
 

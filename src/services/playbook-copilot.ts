@@ -1,6 +1,6 @@
 export interface CopilotTip {
     id: string;
-    category: 'Ingestion' | 'Review' | 'Assessment' | 'Personalization' | 'Compliance';
+    category: 'Ingestion' | 'Review' | 'Assessment' | 'Personalization' | 'Compliance' | 'Research';
     title: string;
     content: string;
     actionable?: boolean;
@@ -121,5 +121,31 @@ export class PlaybookCopilotService {
                 priority: 'Medium'
             }
         ];
+    }
+
+    getResearchTips(hasNotebookLM: boolean): CopilotTip[] {
+        const tips: CopilotTip[] = [
+            {
+                id: 'research-textbook',
+                category: 'Research',
+                title: 'Ask the Textbook',
+                content: 'Use the Research Co-Pilot to ask questions directly to your source material. Answers are grounded — no hallucinations.',
+                priority: 'High',
+                actionable: true
+            }
+        ];
+
+        if (!hasNotebookLM) {
+            tips.push({
+                id: 'research-setup',
+                category: 'Research',
+                title: 'Connect Your Textbook',
+                content: 'Upload your textbook to NotebookLM to unlock grounded research. The AI Co-Pilot will cite exact pages.',
+                priority: 'High',
+                actionable: true
+            });
+        }
+
+        return tips;
     }
 }
