@@ -160,4 +160,60 @@ describe('Research Routes - Integration', () => {
         expect(res.body.unshared).toBe(true);
         expect(mockSharing.unshare).toHaveBeenCalledWith('nb-1', 't2');
     });
+
+    // RR-16: ask without notebookId still works (general query)
+    it('POST /research/ask — general query without notebookId', async () => {
+        const res = await request(app)
+            .post('/research/ask')
+            .send({ question: 'What is algebra?' });
+        expect(res.status).toBe(200);
+        expect(res.body.answer).toBeDefined();
+    });
+
+    // RR-17: share rejects missing targetDid
+    it('POST /research/notebooks/:id/share — rejects missing targetDid', async () => {
+        const res = await request(app)
+            .post('/research/notebooks/nb-1/share')
+            .send({ sharedByDid: 't1' }); // missing targetDid
+        expect(res.status).toBe(400);
+    });
+
+    // RR-18: share defaults role to reader
+    it('POST /research/notebooks/:id/share — defaults role to reader', async () => {
+        vi.mocked(mockSharing.getAccessLevel).mockResolvedValueOnce('owner');
+        const res = await request(app)
+            .post('/research/notebooks/nb-1/share')
+            .send({ targetDid: 't2', sharedByDid: 't1' }); // no role
+        expect(res.status).toBe(200);
+        expect(mockSharing.share).toHaveBeenCalledWith('nb-1', 't2', 'reader', 't1');
+    });
+
+    // RR-19: ask response shape matches NotebookLMResponse
+    it('POST /research/ask — response has answer + citations + confidence', async () => {
+        const res = await request(app)
+            .post('/research/ask')
+            .send({ question: 'test' });
+        expect(res.body).toHaveProperty('answer');
+        expect(res.body).toHaveProperty('citations');
+        expect(res.body).toHaveProperty('confidence');
+    });
+
+    // RR-20: notebook creation response has id
+    it('POST /research/notebooks — response has id', async () => {
+        const res = await request(app)
+            .post('/research/notebooks')
+            .send({ url: 'https://example.com', title: 'Test', ownerDid: 't1' });
+        expect(res.status).toBe(201);
+        expect(res.body).toHaveProperty('id');
+    });
+
+    // RR-21: notebooks list response shape
+    it('GET /research/notebooks — response has owned + shared arrays', async () => {
+        const res = await request(app)
+            .get('/research/notebooks?teacherDid=t1');
+        expect(res.body).toHaveProperty('owned');
+        expect(res.body).toHaveProperty('shared');
+        expect(Array.isArray(res.body.owned)).toBe(true);
+        expect(Array.isArray(res.body.shared)).toBe(true);
+    });
 });

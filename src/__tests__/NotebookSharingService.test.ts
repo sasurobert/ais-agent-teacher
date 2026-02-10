@@ -152,4 +152,93 @@ describe('NotebookSharingService', () => {
         const level = await service.getAccessLevel('nb-1', 'stranger');
         expect(level).toBeNull();
     });
+
+    // NS-15: register with all optional fields undefined → null in DB
+    it('should register with undefined optional fields → null', async () => {
+        mockPrisma.notebookRegistry.create.mockResolvedValue({ id: 'uuid-2' });
+        await service.register({
+            notebooklmId: 'nb-2',
+            notebooklmUrl: 'https://notebooklm.google.com/nb/2',
+            title: 'Minimal',
+            ownerDid: 'teacher-1'
+        });
+        expect(mockPrisma.notebookRegistry.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({
+                description: null,
+                subject: null,
+                gradeLevel: null,
+                sourcePdfHash: null,
+                visibility: 'private',
+                tags: [],
+            })
+        });
+    });
+
+    // NS-16: register with public visibility
+    it('should register with public visibility', async () => {
+        mockPrisma.notebookRegistry.create.mockResolvedValue({ id: 'uuid-3' });
+        await service.register({
+            notebooklmId: 'nb-3',
+            notebooklmUrl: 'url',
+            title: 'Public Book',
+            ownerDid: 'teacher-1',
+            visibility: 'public'
+        });
+        expect(mockPrisma.notebookRegistry.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ visibility: 'public' })
+        });
+    });
+
+    // NS-17: getShares returns all shares for a notebook
+    it('should getShares returns all shares', async () => {
+        mockPrisma.notebookShare.findMany.mockResolvedValue([
+            { notebookId: 'nb-1', sharedWithDid: 't2', role: 'reader' },
+            { notebookId: 'nb-1', sharedWithDid: 't3', role: 'contributor' }
+        ]);
+        const shares = await service.getShares('nb-1');
+        expect(shares).toHaveLength(2);
+    });
+
+    // NS-18: getAccessLevel returns reader for public (no share)
+    it('should return reader for public notebook without share', async () => {
+        mockPrisma.notebookRegistry.findUnique.mockResolvedValue({
+            id: 'nb-1', ownerDid: 'teacher-1', visibility: 'public'
+        });
+        mockPrisma.notebookShare.findFirst.mockResolvedValue(null);
+        const level = await service.getAccessLevel('nb-1', 'stranger');
+        expect(level).toBe('reader');
+    });
+
+    // NS-19: register with empty tags defaults to []
+    it('should register with empty tags array', async () => {
+        mockPrisma.notebookRegistry.create.mockResolvedValue({ id: 'uuid-4' });
+        await service.register({
+            notebooklmId: 'nb-4',
+            notebooklmUrl: 'url',
+            title: 'Tagged',
+            ownerDid: 'teacher-1',
+            tags: []
+        });
+        expect(mockPrisma.notebookRegistry.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ tags: [] })
+        });
+    });
+
+    // NS-20: share with reader role
+    it('should share with reader role', async () => {
+        mockPrisma.notebookShare.create.mockResolvedValue({ id: 'share-2' });
+        await service.share('nb-1', 't2', 'reader', 't1');
+        expect(mockPrisma.notebookShare.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ role: 'reader' })
+        });
+    });
+
+    // NS-21: share with contributor role
+    it('should share with contributor role', async () => {
+        mockPrisma.notebookShare.create.mockResolvedValue({ id: 'share-3' });
+        await service.share('nb-1', 't2', 'contributor', 't1');
+        expect(mockPrisma.notebookShare.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ role: 'contributor' })
+        });
+    });
 });

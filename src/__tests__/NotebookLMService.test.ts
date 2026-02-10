@@ -115,4 +115,92 @@ describe('NotebookLMService', () => {
         expect(results).toHaveLength(2);
         expect(results[0].answer).toContain('Improper fractions');
     });
+
+    // NLM-09: query handles malformed JSON from MCP
+    it('should handle malformed JSON from MCP gracefully', async () => {
+        await service.connect();
+        const clientInstance = (service as any).client;
+        clientInstance.callTool = vi.fn().mockResolvedValueOnce({
+            content: [{ type: 'text', text: 'not-json{{' }]
+        });
+        const result = await service.query('test');
+        expect(result.confidence).toBe('not_found');
+        expect(result.answer).toContain('unavailable');
+    });
+
+    // NLM-10: query handles success: false in MCP response
+    it('should handle success: false in MCP response', async () => {
+        await service.connect();
+        const clientInstance = (service as any).client;
+        clientInstance.callTool = vi.fn().mockResolvedValueOnce({
+            content: [{ type: 'text', text: JSON.stringify({ success: false, error: 'Notebook not found' }) }]
+        });
+        const result = await service.query('test');
+        expect(result.confidence).toBe('not_found');
+        expect(result.answer).toContain('Notebook not found');
+    });
+
+    // NLM-11: createFromUpload throws on MCP failure
+    it('should throw on createFromUpload MCP failure', async () => {
+        await service.connect();
+        const clientInstance = (service as any).client;
+        clientInstance.callTool = vi.fn().mockRejectedValueOnce(new Error('Upload failed'));
+        await expect(service.createFromUpload('url', { name: 'test' })).rejects.toThrow('Upload failed');
+    });
+
+    // NLM-12: listNotebooks returns empty on MCP error
+    it('should throw on listNotebooks MCP error', async () => {
+        await service.connect();
+        const clientInstance = (service as any).client;
+        clientInstance.callTool = vi.fn().mockRejectedValueOnce(new Error('List failed'));
+        await expect(service.listNotebooks()).rejects.toThrow('List failed');
+    });
+
+    // NLM-13: disconnect sets isConnected to false
+    it('should disconnect and set isConnected to false', async () => {
+        await service.connect();
+        expect(service.isConnected()).toBe(true);
+        await service.disconnect();
+        expect(service.isConnected()).toBe(false);
+    });
+
+    // NLM-14: connect-disconnect-connect works
+    it('should handle connect-disconnect-connect cycle', async () => {
+        await service.connect();
+        await service.disconnect();
+        await service.connect();
+        expect(service.isConnected()).toBe(true);
+    });
+
+    // NLM-15: selectNotebook calls correct MCP tool
+    it('should selectNotebook with correct arguments', async () => {
+        await service.connect();
+        const clientInstance = (service as any).client;
+        await service.selectNotebook('nb-123');
+        expect(clientInstance.callTool).toHaveBeenCalledWith({
+            name: 'select_notebook',
+            arguments: { notebook_id: 'nb-123' },
+        });
+    });
+
+    // NLM-16: query with empty string
+    it('should handle query with empty string', async () => {
+        await service.connect();
+        const result = await service.query('');
+        expect(result.answer).toBeDefined();
+    });
+
+    // NLM-17: deepResearch with empty array
+    it('should return empty array for deepResearch with no questions', async () => {
+        await service.connect();
+        const results = await service.deepResearch([]);
+        expect(results).toEqual([]);
+    });
+
+    // NLM-18: createFromUpload with minimal meta
+    it('should createFromUpload with minimal meta (name only)', async () => {
+        await service.connect();
+        const id = await service.createFromUpload('https://example.com', { name: 'Test' });
+        expect(id).toBe('test-notebook-id');
+    });
 });
